@@ -1,0 +1,153 @@
+Description: >
+  This template deploys an ECS Fargate Cluster
+
+Parameters:
+
+  VPCStackName:
+    Description: CFN Stack of VPC
+    Type: String
+
+  SFDCKinesisStreamShardCount:
+    Description: number of shards
+    Type: Number
+    Default: 1
+
+  DockerImageUrl:
+    Description: could be dockerhub or ECR
+    Type: String
+    
+  ECSServiceLogGroupRetentionInDays:
+    Type: Number
+    Default: 30
+
+  ContainerCpu:
+    Type: Number
+    Default: 256
+    Description: How much CPU to give the container. 1024 is 1 CPU
+
+  ContainerMemory:
+    Type: Number
+    Default: 512
+    Description: How much memory in megabytes to give the container
+
+Resources:
+
+  SFDCKinesisStream:
+    Type: AWS::Kinesis::Stream
+    Name: !Sub "${AWS::StackName}-sfdc-cdc-stream"
+    RetentionPeriodHours: 24
+    ShardCount: !Ref SFDCKinesisStreamShardCount
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+
+  SubscriberTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Access to the Fargate containers
+      VpcId:
+        'Fn::ImportValue': !Join [ ":", [ !Ref VPCStackName, VPC ]  ]
+      SecurityGroupIngress:
+        - CidrIp:
+            'Fn::ImportValue': !Join [ ":", [ !Ref VPCStackName, VpcCIDR ]  ]
+          IpProtocol: -1
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: [ecs-tasks.amazonaws.com]
+          Action: ['sts:AssumeRole']
+      Path: /
+      Policies:
+        - PolicyName: AmazonECSTaskExecutionRolePolicy
+          PolicyDocument:
+            Statement:
+            - Effect: Allow
+              Action:
+                # Allow the ECS Tasks to download images from ECR
+                - 'ecr:GetAuthorizationToken'
+                - 'ecr:BatchCheckLayerAvailability'
+                - 'ecr:GetDownloadUrlForLayer'
+                - 'ecr:BatchGetImage'
+                - 'kinesis:*' # TODO Minimum privileges required
+
+                # Allow the ECS tasks to upload logs to CloudWatch
+                - 'logs:CreateLogStream'
+                - 'logs:PutLogEvents'
+              Resource: '*'
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${AWS::StackName}-Subscriber'
+      Cpu: !Ref 'ContainerCpu'
+      Memory: !Ref 'ContainerMemory'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      ContainerDefinitions:
+        - Name: !Sub '${AWS::StackName}-Subscriber'
+          Cpu: !Ref 'ContainerCpu'
+          Memory: !Ref 'ContainerMemory'
+          Image: !Ref 'DockerImageUrl'
+          Environment: 
+            - KINESIS_STREAM: !Ref SFDCKinesisStream
+          LogConfiguration:
+            LogDriver: "awslogs"
+            Options:
+              awslogs-group: !Ref ECSServiceLogGroup
+              awslogs-region: { Ref: "AWS::Region" }
+              awslogs-stream-prefix: !Sub '${AWS::StackName}-Subscriber'
+  
+  ECSServiceLogGroup:
+    Type: 'AWS::Logs::LogGroup'
+    Properties:
+      RetentionInDays:
+        Ref: ECSServiceLogGroupRetentionInDays
+
+  SubscriberService:
+    Type: AWS::ECS::Service    
+    Properties:
+      ServiceName: !Sub '${AWS::StackName}-Subscriber'
+      Cluster: !Ref ECSCluster
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref SubscriberTaskSecurityGroup
+          Subnets:
+            - Fn::ImportValue:
+                !Join [':', [!Ref 'VPCStackName', 'PublicSubnet1']]
+            - Fn::ImportValue:
+                !Join [':', [!Ref 'VPCStackName', 'PublicSubnet2']]
+      TaskDefinition: !Ref 'TaskDefinition'
+
+Outputs:
+
+  Cluster:
+    Description: A reference to the ECS cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub "${AWS::StackName}:ECSCluster"
+
+  ECSServiceLogGroup:
+    Description: Log group for services to publish logs
+    Value: !Ref ECSServiceLogGroup
+    Export:
+      Name: !Sub "${AWS::StackName}:ECSServiceLogGroup"
+
+  SFDCKinesisStream:
+    Descrition: Kinesis stream
+    Value: !Ref SFDCKinesisStream
+    Export:
+      Name: !Sub "${AWS::StackName}:SFDCKinesisStream"

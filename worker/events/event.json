@@ -1,0 +1,20 @@
+{
+  "Records": [
+    {
+      "kinesis": {
+        "kinesisSchemaVersion": "1.0",
+        "partitionKey": "Account",
+        "sequenceNumber": "49604813621909107962609230072534927822856698867713310722",
+        "data": "eyJzY2hlbWEiOiI4X2o0SnZibDV2WTFjVWc2eWtLc0t3IiwicGF5bG9hZCI6eyJMYXN0TW9kaWZpZWREYXRlIjoiMjAyMC0wMy0wNFQwNTo0ODoxNC4wMDBaIiwiQ2xlYW5TdGF0dXMiOiJQZW5kaW5nIiwiT3duZXJJZCI6IjAwNTJ3MDAwMDAyNUtQR0FBMiIsIkNyZWF0ZWRCeUlkIjoiMDA1MncwMDAwMDI1S1BHQUEyIiwiQ2hhbmdlRXZlbnRIZWFkZXIiOnsiY29tbWl0TnVtYmVyIjoxMDkxNzk1MTQzMzMsImNvbW1pdFVzZXIiOiIwMDUydzAwMDAwMjVLUEdBQTIiLCJzZXF1ZW5jZU51bWJlciI6MSwiZW50aXR5TmFtZSI6IkFjY291bnQiLCJjaGFuZ2VUeXBlIjoiQ1JFQVRFIiwiY2hhbmdlZEZpZWxkcyI6W10sImNoYW5nZU9yaWdpbiI6ImNvbS9zYWxlc2ZvcmNlL2FwaS9zb2FwLzQ4LjA7Y2xpZW50PVNmZGNJbnRlcm5hbEFQSS8iLCJ0cmFuc2FjdGlvbktleSI6IjAwMDE2MDQ4LTJkYTktNjcxOS00NmE0LWZkYTZjZGE5ZTJkNCIsImNvbW1pdFRpbWVzdGFtcCI6MTU4MzMwMDg5NDAwMCwicmVjb3JkSWRzIjpbIjAwMTJ3MDAwMDA1RlN6VkFBVyJdfSwiQ3JlYXRlZERhdGUiOiIyMDIwLTAzLTA0VDA1OjQ4OjE0LjAwMFoiLCJMYXN0TW9kaWZpZWRCeUlkIjoiMDA1MncwMDAwMDI1S1BHQUEyIiwiTmFtZSI6IkFjY1Rlc3QxIn0sImV2ZW50Ijp7InJlcGxheUlkIjozODF9fQ==",
+        "approximateArrivalTimestamp": 1583374099.591
+      },
+      "eventSource": "aws:kinesis",
+      "eventVersion": "1.0",
+      "eventID": "shardId-000000000000:49604813621909107962609230072534927822856698867713310722",
+      "eventName": "aws:kinesis:record",
+      "invokeIdentityArn": "arn:aws:iam::845547522342:role/service-role/nickksun-sfdc-kinesis-worker-role-usag93m3",
+      "awsRegion": "ap-southeast-2",
+      "eventSourceARN": "arn:aws:kinesis:ap-southeast-2:845547522342:stream/sfdc-ChangeEvents"
+    }
+  ]
+}

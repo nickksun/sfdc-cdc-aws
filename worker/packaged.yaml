@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Kinesis worker function processing CDC payloads from SFDC'
+Parameters:
+  TargetS3BucketName:
+    Type: String
+  SFDCSubscriberStack:
+    Type: String
+Globals:
+  Function:
+    Timeout: 900
+Resources:
+  WorkerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://nickksun-sam/269ae95a807750668895280953313684
+      Handler: app.lambda_handler
+      Runtime: python3.7
+      MemorySize: 256
+      Policies:
+      - Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Resource:
+            Fn::Sub: arn:aws:s3:::${TargetS3BucketName}/*
+          Action:
+          - s3:PutObject
+        - Effect: Allow
+          Resource:
+            Fn::ImportValue:
+              Fn::Join:
+              - ':'
+              - - Ref: SFDCSubscriberStack
+                - SFDCKinesisStreamARN
+          Action:
+          - kinesis:GetRecords
+          - kinesis:GetShardIterator
+          - kinesis:DescribeStream
+          - kinesis:ListStreams
+        - Effect: Allow
+          Resource:
+            Fn::GetAtt:
+            - FullCDCDeliveryStream
+            - Arn
+          Action:
+          - firehose:DeleteDeliveryStream
+          - firehose:PutRecord
+          - firehose:PutRecordBatch
+          - firehose:UpdateDestination
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - ssm:GetParameter
+        - Effect: Allow
+          Resource: '*'
+          Action:
+          - kms:Decrypt
+      Environment:
+        Variables:
+          TARGET_DELIVERY_STREAM:
+            Ref: FullCDCDeliveryStream
+          BATCH_SIZE: 50
+          INTERVAL: 1
+      Events:
+        KinesisEvent:
+          Type: Kinesis
+          Properties:
+            Stream:
+              Fn::ImportValue:
+                Fn::Join:
+                - ':'
+                - - Ref: SFDCSubscriberStack
+                  - SFDCKinesisStreamARN
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 100
+            Enabled: true
+  FullCDCDeliveryStreamIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - firehose.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Policies:
+      - PolicyName: FirehoseS3Policy
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - s3:AbortMultipartUpload
+            - s3:GetBucketLocation
+            - s3:GetObject
+            - s3:ListBucket
+            - s3:ListBucketMultipartUploads
+            - s3:PutObject
+            Resource:
+            - Fn::Sub: arn:aws:s3:::${TargetS3BucketName}
+            - Fn::Sub: arn:aws:s3:::${TargetS3BucketName}/*
+          - Effect: Allow
+            Action:
+            - logs:PutLogEvents
+            Resource:
+              Fn::Sub: arn:aws:firehose:${AWS::Region}:${AWS::AccountId}:log-group:*:log-stream:*
+  FullCDCDeliveryStream:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamName:
+        Fn::Sub: ${AWS::StackName}-full-cdc-delivery-stream
+      DeliveryStreamType: DirectPut
+      S3DestinationConfiguration:
+        BucketARN:
+          Fn::Sub: arn:aws:s3:::${TargetS3BucketName}
+        BufferingHints:
+          IntervalInSeconds: '60'
+          SizeInMBs: '50'
+        CompressionFormat: UNCOMPRESSED
+        Prefix: sfdc-cdc/
+        RoleARN:
+          Fn::GetAtt:
+          - FullCDCDeliveryStreamIAMRole
+          - Arn
+Outputs:
+  WorkerFunction:
+    Description: Worker Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - WorkerFunction
+      - Arn

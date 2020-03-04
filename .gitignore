@@ -10,3 +10,5 @@
 **/.DS_Store
 
 */venv
+
+packaged*.yaml
