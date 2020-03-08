@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: 'Kinesis worker function processing CDC payloads from SFDC'
+Description: 'Kinesis worker function processing CDC payloads from SFDC
+
+  '
 Parameters:
   TargetS3BucketName:
     Type: String
@@ -13,7 +15,7 @@ Resources:
   WorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: s3://nickksun-sam/269ae95a807750668895280953313684
+      CodeUri: s3://nickksun-sam/7ed16960df82747250110c44d933c498
       Handler: app.lambda_handler
       Runtime: python3.7
       MemorySize: 256

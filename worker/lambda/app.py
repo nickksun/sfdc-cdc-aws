@@ -73,6 +73,27 @@ def process_sfdc_payload(payload_data):
    
    
    for index in range(0, len(objects[entityName]), batch_size):
+      # Handling DELETE
+      if changeType == 'DELETE':
+         for sfdc_object_id in objects[entityName][index:index+batch_size]:
+            delivery_data_object = {
+               "attributes": {
+                  "type": entityName
+               },
+               'Id': sfdc_object_id,
+               'UIND': changeType
+            }
+            firehose_client.put_record(
+               DeliveryStreamName=delivery_stream_name,
+               Record={
+                  'Data': json.dumps(delivery_data_object).encode()
+               }
+            )
+            # Log to CloudWatch for debug
+            print(json.dumps(delivery_data_object))
+         continue
+
+      # Handling INSERT/UPDATE   
       sfdc_query = 'SELECT %s FROM %s WHERE Id IN (%s)' % (','.join(getObjectFields(entityName)), entityName, ','.join(objects[entityName][index:index+batch_size]))
       
       sf_data = sf.query_all(sfdc_query)

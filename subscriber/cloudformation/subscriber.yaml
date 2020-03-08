@@ -1,5 +1,5 @@
 Description: >
-  This template deploys an ECS Fargate Cluster
+  This template deploys an ECS Fargate Cluster plus a Kinesis stream to subscriber app to send payloads received from SFDC event bus to stream in AWS
 
 Parameters:
 
