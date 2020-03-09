@@ -3,8 +3,9 @@
 ## Requirements:
 
 * [Docker Desktop](https://www.docker.com/products/docker-desktop) - Required to build docker image locally before pushing to a repo
+* [Maven v3.6.3+](https://maven.apache.org/) - Required to build JAR as executable file
 * [SAM CLI v0.41.0+](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html) - To package/deploy SAM apps.
-* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) - To create resources in your AWS account.
+* [AWS CLI v1.18.0+](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html) - To create resources in your AWS account.
 
 
 
@@ -82,6 +83,8 @@ export DOCKER_IMAGE_NAME="sfdc-cdc-aws-sub"
 export STACK_NAME="sfdc-cdc-aws"
 
 cd subscriber
+
+mvn clean package
 
 docker build -t $DOCKER_IMAGE_NAME .
 
