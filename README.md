@@ -21,6 +21,7 @@ export UNAME="SFDC_USERNAME"
 export PWORD="SFDC_PASSWORD"
 export SECURITY_TOKEN="SFDC_SECURITY_TOKEN"
 
+export AWS_ACCOUNT_ID="YOUR_AWS_ACCOUNT_ID"
 export AWS_DEFAULT_REGION="YOUR_TARGET_REGION"
 
 aws ssm put-parameter \
@@ -76,13 +77,11 @@ aws ssm put-parameter \
 ### Deploy `Subscriber`
 
 ```
-export AWS_ACCOUNT_ID="YOUR_AWS_ACCOUNT_ID"
-
 export DOCKER_IMAGE_NAME="sfdc-cdc-aws-sub"
 
 export STACK_NAME="sfdc-cdc-aws"
 
-cd subscriber
+cd subscriber/app
 
 mvn clean package
 
@@ -93,6 +92,8 @@ aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_A
 docker tag $DOCKER_IMAGE_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$DOCKER_IMAGE_NAME:latest
 
 docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$DOCKER_IMAGE_NAME:latest
+
+cd ../
 
 aws cloudformation deploy --stack-name $STACK_NAME-vpc --parameter-overrides EnvironmentName=$STACK_NAME --template-file ./cloudformation/vpc.yaml --capabilities CAPABILITY_IAM
 
