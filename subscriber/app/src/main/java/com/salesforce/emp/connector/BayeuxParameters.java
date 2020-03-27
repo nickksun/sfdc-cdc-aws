@@ -69,7 +69,7 @@ public interface BayeuxParameters {
      *         messages
      */
     default int maxBufferSize() {
-        return 1048576;
+        return 1073741824;
     }
 
     /**
@@ -77,7 +77,7 @@ public interface BayeuxParameters {
      *         Bayeux server failed
      */
     default int maxNetworkDelay() {
-        return 15000;
+        return 900000;
     }
 
     /**
