@@ -1,8 +1,8 @@
 # Use case:
 
-The Change Data Capture (CDC) occurred to any SFDC object needs to be replicated in DaaS platform.
+The Change Data Capture (CDC) occurred to any SFDC object needs to be replicated in data lake.
 
-The payload received from SFDC CDC event bus only contains changed fields, it is required to have the full record of the changed object to be received at DaaS side.
+The payload received from SFDC CDC event bus only contains changed fields, it is required to have the full record of the changed object to be received at lake side.
 
 The solution should provide functions include:
 
@@ -17,7 +17,7 @@ The solution should provide functions include:
     - operations: INSERT/UPDATE/DELETE
     - All values of All fields of the record
 
-- The full payload should then placed to a landing bucket for DaaS platform to pick up as data ingest
+- The full payload should then placed to a landing bucket for lake platform to pick up as data ingest
 
 The solution should provide a controllable way to query SFDC under considerations of 
 
@@ -29,11 +29,11 @@ The solution should provide a controllable way to query SFDC under consideration
 
 - One object is changed in SFDC
 
-    - This should result a full data (all values of all fields) of the record to be placed in DaaS with one of values in “INSERT/UPDATE/DELETE”
+    - This should result a full data (all values of all fields) of the record to be placed in data lake with one of values in “INSERT/UPDATE/DELETE”
 
 - Multiple objects are changed in SFDC
 
-    - This should result several records to be placed in DaaS
+    - This should result several records to be placed in the data lake
     - Each record should contain all values of all fields plus one of values in “INSERT/UPDATE/DELETE”
 
 ----
